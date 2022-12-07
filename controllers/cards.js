@@ -7,7 +7,7 @@ const ERROR_INTERNAL_SERVER = 500;
 
 const getCards = async (req, res) => {
   try {
-    const cards = await Card.find({});
+    const cards = await Card.find({}).populate(['owner', 'likes']);
     return res.status(SUCCESS).json(cards);
   } catch (e) {
     console.error(e);

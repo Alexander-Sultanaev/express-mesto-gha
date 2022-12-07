@@ -18,6 +18,8 @@ app.use((req, res, next) => {
 });
 app.use('/users', userRoutes);
 app.use('/cards', cardRoutes);
+app.use('*', (req, res) => res.status(404).json({ message: 'Страница не найдена' }));
+
 mongoose.connect('mongodb://localhost:27017/mestodb', () => {
   console.log('Connected mongoDB');
   app.listen(PORT, () => {

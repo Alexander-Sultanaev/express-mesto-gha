@@ -21,7 +21,7 @@ const getUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user) {
+    if (user === null) {
       return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
     }
     return res.status(SUCCESS).json(user);
@@ -36,8 +36,8 @@ const getUser = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const { name, about, avatar } = req.body;
-    await User.create({ name, about, avatar });
-    return res.status(SUCCESS).json({ name, about, avatar });
+    const user = await User.create({ name, about, avatar });
+    return res.status(SUCCESS).json(user);
   } catch (e) {
     console.error(e);
     if (e.name === 'ValidationError' || e.name === 'CastError') {
