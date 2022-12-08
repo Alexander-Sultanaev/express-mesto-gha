@@ -30,14 +30,13 @@ const createCard = async (req, res) => {
 const deleteCard = async (req, res) => {
   try {
     const { cardId } = req.params;
-    const card = await Card.findById(cardId);
-    if (card === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
-    }
-    await Card.findByIdAndRemove(cardId);
+    await Card.findByIdAndRemove(cardId).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json({ message: 'Карточка успешно удалена' });
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
+    }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный _id удаляемой карточки' });
     }
@@ -52,11 +51,11 @@ const likeCard = async (req, res) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     ).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).json({ message: 'Карточка не найдена' });
+    return res.status(SUCCESS).json({ message: 'Лайк успешно отправлен' });
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
     }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный данные для поставки лайка' });
@@ -67,18 +66,17 @@ const likeCard = async (req, res) => {
 const dislikeCard = async (req, res) => {
   try {
     const { cardId } = req.params;
-    const card = await Card.findById(cardId);
-    if (card === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
-    }
     await Card.findByIdAndUpdate(
       cardId,
       { $pull: { likes: req.user._id } },
       { new: true },
-    );
+    ).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json({ message: 'Лайк успешно удален' });
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
+    }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный данные для удаления лайка' });
     }

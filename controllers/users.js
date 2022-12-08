@@ -49,18 +49,17 @@ const createUser = async (req, res) => {
 const updateInfoUser = async (req, res) => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
-    }
     const { name, about } = req.body;
     const updateUser = await User.findByIdAndUpdate(userId, { name, about }, {
       new: true,
       runValidators: true,
-    });
+    }).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(updateUser);
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+    }
     if (e.name === 'ValidationError' || e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при изменении данных' });
     }
@@ -70,18 +69,17 @@ const updateInfoUser = async (req, res) => {
 const updateAvatarUser = async (req, res) => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
-    }
     const { avatar } = req.body;
     const updateUser = await User.findByIdAndUpdate(userId, { avatar }, {
       new: true,
       runValidators: true,
-    });
+    }).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(updateUser);
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+    }
     if (e.name === 'ValidationError' || e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при изменении аватара' });
     }
