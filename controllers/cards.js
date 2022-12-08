@@ -47,18 +47,17 @@ const deleteCard = async (req, res) => {
 const likeCard = async (req, res) => {
   try {
     const { cardId } = req.params;
-    const card = await Card.findById(cardId);
-    if (card === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
-    }
     await Card.findByIdAndUpdate(
       cardId,
       { $addToSet: { likes: req.user._id } },
       { new: true },
-    );
-    return res.status(SUCCESS).json({ message: 'Лайк успешно отправлен' });
+    ).orFail(new Error('NotValidId'));
+    return res.status(SUCCESS).json({ message: 'Карточка не найдена' });
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+    }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный данные для поставки лайка' });
     }
