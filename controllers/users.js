@@ -7,26 +7,26 @@ const ERROR_INTERNAL_SERVER = 500;
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({});
-    if (users.length === 0) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
-    }
+    const users = await User.find({}).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(users);
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+    }
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
 const getUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId);
-    if (user === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
-    }
+    const user = await User.findById(userId).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(user);
   } catch (e) {
     console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+    }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Некорректно передан _id пользователя' });
     }

@@ -1,14 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cardRoutes = require('./routes/cards');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
+const cardRoutes = require('./routes/cards');
 const userRoutes = require('./routes/users');
 
 const PORT = 3000;
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
 const app = express();
 app.use(express.json());
-
+app.use(limiter);
+app.use(helmet());
 app.use((req, res, next) => {
   req.user = {
     _id: '63902563dbc728ae970c2839',
