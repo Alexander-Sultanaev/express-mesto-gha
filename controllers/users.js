@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const User = require('../models/user');
 
 const SUCCESS = 200;
@@ -35,8 +36,13 @@ const getUser = async (req, res) => {
 };
 const createUser = async (req, res) => {
   try {
-    const { name, about, avatar } = req.body;
-    const user = await User.create({ name, about, avatar });
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name, about, avatar, email, password: hash,
+    });
     return res.status(SUCCESS).json(user);
   } catch (e) {
     console.error(e);
@@ -86,6 +92,7 @@ const updateAvatarUser = async (req, res) => {
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
+
 module.exports = {
   getUsers,
   getUser,
