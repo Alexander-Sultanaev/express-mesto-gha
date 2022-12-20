@@ -1,4 +1,6 @@
+/* eslint-disable no-console */
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const SUCCESS = 200;
@@ -92,11 +94,31 @@ const updateAvatarUser = async (req, res) => {
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
-
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+    if (user === null) {
+      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные email или пароля' });
+    }
+    const matched = await bcrypt.compare(password, user.password);
+    if (!matched) {
+      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные email или пароля' });
+    }
+    const payload = { _id: user._id, user: user.login };
+    const tokenKey = 'token_key';
+    const token = jwt.sign(payload, tokenKey, { expiresIn: '7d' });
+    return res.status(SUCCESS).json({ token });
+  } catch (e) {
+    console.error(e);
+    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+  }
+};
 module.exports = {
   getUsers,
   getUser,
   createUser,
   updateInfoUser,
   updateAvatarUser,
+  login,
 };

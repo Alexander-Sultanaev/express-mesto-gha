@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const express = require('express');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
@@ -5,6 +6,8 @@ const helmet = require('helmet');
 
 const cardRoutes = require('./routes/cards');
 const userRoutes = require('./routes/users');
+const { login, createUser } = require('./controllers/users');
+const { checkAuth } = require('./middlewares/auth');
 
 const PORT = 3000;
 
@@ -24,6 +27,11 @@ app.use((req, res, next) => {
 
   next();
 });
+
+app.post('/signin', login);
+app.post('/signup', createUser);
+
+app.use(checkAuth);
 app.use('/users', userRoutes);
 app.use('/cards', cardRoutes);
 app.use('*', (req, res) => res.status(404).json({ message: 'Страница не найдена' }));
