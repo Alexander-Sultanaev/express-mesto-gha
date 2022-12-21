@@ -108,9 +108,22 @@ const login = async (req, res) => {
     const payload = { _id: user._id, user: user.login };
     const tokenKey = 'token_key';
     const token = jwt.sign(payload, tokenKey, { expiresIn: '7d' });
-    return res.status(SUCCESS).json({ token });
+    return res.status(SUCCESS).send({ token });
   } catch (e) {
     console.error(e);
+    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+  }
+};
+const getUserInfo = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).orFail(new Error('NotValidId'));
+    return res.status(SUCCESS).send(user);
+  } catch (e) {
+    console.error(e);
+    if (e.message === 'NotValidId') {
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+    }
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
@@ -121,4 +134,5 @@ module.exports = {
   updateInfoUser,
   updateAvatarUser,
   login,
+  getUserInfo,
 };

@@ -20,13 +20,6 @@ const app = express();
 app.use(express.json());
 app.use(limiter);
 app.use(helmet());
-app.use((req, res, next) => {
-  req.user = {
-    _id: '639183a84a9e72bc360b5efd',
-  };
-
-  next();
-});
 
 app.post('/signin', login);
 app.post('/signup', createUser);
