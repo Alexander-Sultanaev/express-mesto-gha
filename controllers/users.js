@@ -45,7 +45,9 @@ const createUser = async (req, res) => {
     const user = await User.create({
       name, about, avatar, email, password: hash,
     });
-    return res.status(SUCCESS).json(user);
+    return res.status(SUCCESS).json({
+      _id: user._id, email: user.email, name: user.name, about: user.about, avatar: user.avatar,
+    });
   } catch (e) {
     console.error(e);
     if (e.name === 'ValidationError' || e.name === 'CastError') {

@@ -28,7 +28,6 @@ const createCard = async (req, res) => {
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
-// eslint-disable-next-line consistent-return
 const deleteCard = async (req, res) => {
   try {
     const { cardId } = req.params;
