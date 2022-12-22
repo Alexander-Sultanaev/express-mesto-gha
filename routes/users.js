@@ -25,6 +25,7 @@ userRoutes.patch('/me/avatar', celebrate({
       }
       return helpers.message('Передан некорректный URL-адрес');
     }),
+
   }),
 }), updateAvatarUser);
 
