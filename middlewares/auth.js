@@ -1,7 +1,7 @@
 /* eslint-disable consistent-return */
 const jwt = require('jsonwebtoken');
 
-const checkAuth = (req, res, next) => {
+const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
@@ -27,4 +27,4 @@ const checkAuth = (req, res, next) => {
   next();
 };
 
-module.exports = { checkAuth };
+module.exports = { auth };

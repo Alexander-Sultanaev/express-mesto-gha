@@ -1,6 +1,7 @@
 const Card = require('../models/card');
 
 const SUCCESS = 200;
+const ERROR_FORBIDDEN = 403;
 const ERROR_NOT_FOUND = 404;
 const ERROR_INCORRECT_DATE = 400;
 const ERROR_INTERNAL_SERVER = 500;
@@ -27,10 +28,15 @@ const createCard = async (req, res) => {
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
+// eslint-disable-next-line consistent-return
 const deleteCard = async (req, res) => {
   try {
     const { cardId } = req.params;
-    await Card.findByIdAndRemove(cardId).orFail(new Error('NotValidId'));
+    const userId = req.user._id;
+    const card = await Card.findByIdAndRemove(cardId).orFail(new Error('NotValidId'));
+    if (userId !== JSON.stringify(card.owner).replace(/\W/g, '')) {
+      return res.status(ERROR_FORBIDDEN).json({ message: 'Недостаточно прав.' });
+    }
     return res.status(SUCCESS).json({ message: 'Карточка успешно удалена' });
   } catch (e) {
     console.error(e);
