@@ -124,7 +124,7 @@ const login = async (req, res) => {
 };
 const getUserInfo = async (req, res) => {
   try {
-    const { userId } = req.user._id;
+    const { userId } = req.params;
     const user = await User.findById(userId).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).send(user);
   } catch (e) {
