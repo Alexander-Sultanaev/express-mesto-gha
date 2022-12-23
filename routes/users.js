@@ -19,12 +19,7 @@ userRoutes.patch('/me', celebrate({
 }), updateInfoUser);
 userRoutes.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().custom((value, helpers) => {
-      if (/^(http|https):\/\/\S+(?:jpg|jpeg|png)$/.test(value)) {
-        return value;
-      }
-      return helpers.message('Передан некорректный URL-адрес');
-    }),
+    avatar: Joi.string().required().regex(/(http|https):\/\/(www\.)?[0-9a-zA-Z-]+\.[a-zA-Z]+([0-9a-zA-Z-._~:/?#[\]@!$&'()*+,;=]+)/),
   }),
 }), updateAvatarUser);
 module.exports = userRoutes;
