@@ -62,7 +62,7 @@ const createUser = async (req, res) => {
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
 };
-const updateInfoUser = async (req, res) => {
+const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const { name, about } = req.body;
@@ -123,12 +123,13 @@ const login = async (req, res) => {
 const getUserInfo = async (req, res) => {
   try {
     const { userId } = req.user._id;
+    console.log(userId);
     const user = await User.findById(userId).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).send(user);
+    return res.status(SUCCESS).json(user);
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
     }
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
@@ -137,7 +138,7 @@ module.exports = {
   getUsers,
   getUser,
   createUser,
-  updateInfoUser,
+  updateUserProfile,
   updateAvatarUser,
   login,
   getUserInfo,
