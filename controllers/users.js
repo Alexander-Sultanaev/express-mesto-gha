@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const NotFoundError = require('../errors/NotFoundError');
 const User = require('../models/user');
 
 const SUCCESS = 200;
@@ -17,7 +18,7 @@ const getUsers = async (req, res) => {
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователи не найдены' });
+      throw new NotFoundError('Пользователи не найдены');
     }
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }
@@ -30,7 +31,7 @@ const getUser = async (req, res) => {
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Пользователь не найден' });
+      throw new NotFoundError('Пользователи не найдены');
     }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Некорректно передан _id пользователя' });
@@ -113,9 +114,7 @@ const login = async (req, res) => {
     if (!matched) {
       return res.status(ERROR_UNAUTHORIZED).json({ message: 'Переданы некорректные данные email или пароля' });
     }
-    const payload = { _id: user._id };
-    const tokenKey = 'token_key';
-    const token = jwt.sign(payload, tokenKey, { expiresIn: '7d' });
+    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d', hhtpOnly: true, sameSite: true });
     return res.status(SUCCESS).send({ token });
   } catch (e) {
     console.error(e);
