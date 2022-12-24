@@ -114,7 +114,7 @@ const login = async (req, res) => {
     if (!matched) {
       return res.status(ERROR_UNAUTHORIZED).json({ message: 'Переданы некорректные данные email или пароля' });
     }
-    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d', hhtpOnly: true, sameSite: true });
+    const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
     return res.status(SUCCESS).send({ token });
   } catch (e) {
     console.error(e);
