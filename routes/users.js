@@ -7,8 +7,9 @@ const {
 userRoutes.get('/', getUsers);
 userRoutes.get('/me', getUserInfo);
 userRoutes.get('/:userId', celebrate({
-  body: Joi.object().keys({
-    userId: Joi.string().alphanum().hex().length(24),
+  params: Joi.object().keys({
+    userId: Joi.string().alphanum().hex().required()
+      .length(24),
   }),
 }), getUser);
 userRoutes.patch('/me', celebrate({

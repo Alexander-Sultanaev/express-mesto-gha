@@ -30,7 +30,7 @@ const getUser = async (req, res) => {
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Пользователь не найден' });
+      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
     }
     if (e.name === 'CastError') {
       return res.status(ERROR_INCORRECT_DATE).json({ message: 'Некорректно передан _id пользователя' });
