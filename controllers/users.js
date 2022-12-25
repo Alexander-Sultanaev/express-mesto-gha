@@ -122,10 +122,9 @@ const login = async (req, res) => {
 };
 const getUserInfo = async (req, res) => {
   try {
-    const { userId } = req.user._id;
-    console.log(userId);
+    const userId = req.user._id;
     const user = await User.findById(userId).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).json(user);
+    return res.status(SUCCESS).send(user);
   } catch (e) {
     console.error(e);
     if (e.message === 'NotValidId') {
