@@ -29,15 +29,15 @@ const createCard = async (req, res) => {
   }
 };
 const deleteCard = async (req, res) => {
-  const { cardId } = req.params;
-  const userId = req.user._id;
   try {
-    const card = await Card.findById(cardId).populate('owner');
+    const { cardId } = req.params;
+    const userId = req.user._id;
+    const card = await Card.findById(cardId).populate('owner').orFail(new Error('NotValidId'));
     const ownerId = card.owner._id.toString();
     if (ownerId !== userId) {
       return res.status(ERROR_FORBIDDEN).json({ message: 'Недостаточно прав.' });
     }
-    await Card.findByIdAndRemove(cardId).orFail(new Error('NotValidId'));
+    await Card.findByIdAndRemove(cardId);
     return res.status(SUCCESS).json({ message: 'Карточка успешно удалена' });
   } catch (e) {
     console.error(e);
@@ -45,7 +45,7 @@ const deleteCard = async (req, res) => {
       return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
     }
     if (e.name === 'CastError') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Переданы некорректный _id удаляемой карточки' });
+      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный _id удаляемой карточки' });
     }
     return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
   }

@@ -12,18 +12,21 @@ cardRoutes.post('/', celebrate({
   }),
 }), createCard);
 cardRoutes.delete('/:cardId', celebrate({
-  body: Joi.object().keys({
-    cardId: Joi.string().hex().required().length(24),
+  params: Joi.object().keys({
+    cardId: Joi.string().alphanum().hex().required()
+      .length(24),
   }),
 }), deleteCard);
 cardRoutes.put('/:cardId/likes', celebrate({
-  body: Joi.object().keys({
-    cardId: Joi.string().hex().required().length(24),
+  params: Joi.object().keys({
+    cardId: Joi.string().alphanum().hex().required()
+      .length(24),
   }),
 }), likeCard);
 cardRoutes.delete('/:cardId/likes', celebrate({
-  body: Joi.object().keys({
-    cardId: Joi.string().hex().required().length(24),
+  params: Joi.object().keys({
+    cardId: Joi.string().alphanum().hex().required()
+      .length(24),
   }),
 }), dislikeCard);
 
