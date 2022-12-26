@@ -3,12 +3,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-const { celebrate, errors, Joi } = require('celebrate');
-
-const cardRoutes = require('./routes/cards');
-const userRoutes = require('./routes/users');
-const { login, createUser } = require('./controllers/users');
-const { auth } = require('./middlewares/auth');
+const { errors } = require('celebrate');
+const routes = require('./routes/index');
+const errorHandler = require('./errors/ErrorHandler');
 
 const PORT = 3000;
 
@@ -21,27 +18,9 @@ const app = express();
 app.use(express.json());
 app.use(limiter);
 app.use(helmet());
-
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), login);
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().regex(/(http|https):\/\/(www\.)?[0-9a-zA-Z-]+\.[a-zA-Z]+([0-9a-zA-Z-._~:/?#[\]@!$&'()*+,;=]+)/),
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), createUser);
-
-app.use('/users', auth, userRoutes);
-app.use('/cards', auth, cardRoutes);
-app.use('*', (req, res) => res.status(404).json({ message: 'Страница не найдена' }));
+app.use('/', routes);
 app.use(errors());
+app.use(errorHandler);
 mongoose.connect('mongodb://localhost:27017/mestodb', () => {
   console.log('Connected mongoDB');
   app.listen(PORT, () => {
