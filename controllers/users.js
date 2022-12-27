@@ -7,12 +7,10 @@ const IncorrectDataError = require('../errors/IncorrectDataError');
 const UnauthorizedError = require('../errors/UnauthorizedError');
 const ConflictError = require('../errors/ConflictError');
 
-const SUCCESS = 200;
-
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
-    return res.status(SUCCESS).json(users);
+    return res.json(users);
   } catch (err) {
     console.error(err);
     return next(err);
@@ -21,13 +19,10 @@ const getUsers = async (req, res, next) => {
 const getUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).json(user);
+    const user = await User.findById(userId).orFail(() => new NotFoundError('Ошибка 404. Пользователь не найден'));
+    return res.json(user);
   } catch (err) {
     console.error(err);
-    if (err.message === 'NotValidId') {
-      return next(new NotFoundError('Ошибка 404. Пользователь не найден'));
-    }
     if (err.name === 'CastError') {
       return next(new IncorrectDataError('Ошибка 400. Некорректно передан _id пользователя'));
     }
@@ -43,7 +38,7 @@ const createUser = async (req, res, next) => {
     const user = await User.create({
       name, about, avatar, email, password: hash,
     });
-    return res.status(SUCCESS).json({
+    return res.json({
       _id: user._id, email: user.email, name: user.name, about: user.about, avatar: user.avatar,
     });
   } catch (err) {
@@ -64,13 +59,10 @@ const updateUserProfile = async (req, res, next) => {
     const updateUser = await User.findByIdAndUpdate(userId, { name, about }, {
       new: true,
       runValidators: true,
-    }).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).json(updateUser);
+    }).orFail(() => new NotFoundError('Ошибка 404. Пользователь не найден'));
+    return res.json(updateUser);
   } catch (err) {
     console.error(err);
-    if (err.message === 'NotValidId') {
-      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
-    }
     if (err.name === 'ValidationError' || err.name === 'CastError') {
       return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при изменении данных'));
     }
@@ -84,13 +76,10 @@ const updateAvatarUser = async (req, res, next) => {
     const updateUser = await User.findByIdAndUpdate(userId, { avatar }, {
       new: true,
       runValidators: true,
-    }).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).json(updateUser);
+    }).orFail(() => new NotFoundError('Ошибка 404. Пользователь не найден'));
+    return res.json(updateUser);
   } catch (err) {
     console.error(err);
-    if (err.message === 'NotValidId') {
-      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
-    }
     if (err.name === 'ValidationError' || err.name === 'CastError') {
       return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при изменении аватара'));
     }
@@ -109,7 +98,7 @@ const login = async (req, res, next) => {
       return next(new UnauthorizedError('Ошибка 401. Переданы некорректные данные email или пароля'));
     }
     const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-    return res.status(SUCCESS).json({ token });
+    return res.json({ token });
   } catch (err) {
     console.error(err);
     return next(err);
@@ -118,13 +107,10 @@ const login = async (req, res, next) => {
 const getUserInfo = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId).orFail(new Error('NotValidId'));
-    return res.status(SUCCESS).send(user);
+    const user = await User.findById(userId).orFail(() => new NotFoundError('Ошибка 404. Пользователь не найден'));
+    return res.send(user);
   } catch (err) {
     console.error(err);
-    if (err.message === 'NotValidId') {
-      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
-    }
     return next(err);
   }
 };
