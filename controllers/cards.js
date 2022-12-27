@@ -1,81 +1,80 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/NotFoundError');
+const IncorrectDataError = require('../errors/IncorrectDataError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 const SUCCESS = 200;
-const ERROR_FORBIDDEN = 403;
-const ERROR_NOT_FOUND = 404;
-const ERROR_INCORRECT_DATE = 400;
-const ERROR_INTERNAL_SERVER = 500;
 
-const getCards = async (req, res) => {
+const getCards = async (req, res, next) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
     return res.status(SUCCESS).json(cards);
-  } catch (e) {
-    console.error(e);
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+  } catch (err) {
+    console.error(err);
+    return next(err);
   }
 };
-const createCard = async (req, res) => {
+const createCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
     const card = await Card.create({ name, link, owner: req.user._id });
     return res.status(SUCCESS).json(card);
-  } catch (e) {
-    console.error(e);
-    if (e.name === 'ValidationError' || e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при создании карточки' });
+  } catch (err) {
+    console.error(err);
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при создании карточки'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
-const deleteCard = async (req, res) => {
+const deleteCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
     const userId = req.user._id;
     const card = await Card.findById(cardId).populate('owner').orFail(new Error('NotValidId'));
     const ownerId = card.owner._id.toString();
     if (ownerId !== userId) {
-      return res.status(ERROR_FORBIDDEN).json({ message: 'Недостаточно прав.' });
+      return next(new ForbiddenError('Ошибка 403. Недостаточно прав.'));
     }
     await Card.findByIdAndRemove(cardId);
     return res.status(SUCCESS).json({ message: 'Карточка успешно удалена' });
-  } catch (e) {
-    console.error(e);
-    if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'NotValidId') {
+      return next(new NotFoundError('Ошибка 404. Карточка не найдена'));
     }
-    if (e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный _id удаляемой карточки' });
+    if (err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректный _id удаляемой карточки'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
-const likeCard = async (req, res) => {
+const likeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
     const card = await Card.findById(cardId);
     if (card === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
+      return next(new NotFoundError('Ошибка 404. Карточка не найдена'));
     }
     await Card.findByIdAndUpdate(
       cardId,
-      { $addToSet: { likes: req.user._id } },
+      { $pull: { likes: req.user._id } },
       { new: true },
     );
     return res.status(SUCCESS).json({ message: 'Лайк успешно отправлен' });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректный данные для поставки лайка' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректный данные для поставки лайка'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
-const dislikeCard = async (req, res) => {
+const dislikeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
     const card = await Card.findById(cardId);
     if (card === null) {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Карточка не найдена' });
+      return next(new NotFoundError('Ошибка 404. Карточка не найдена'));
     }
     await Card.findByIdAndUpdate(
       cardId,
@@ -83,9 +82,8 @@ const dislikeCard = async (req, res) => {
       { new: true },
     );
     return res.status(SUCCESS).json({ message: 'Лайк успешно удален' });
-  } catch (e) {
-    console.error(e);
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+  } catch (err) {
+    return next(err);
   }
 };
 
