@@ -2,13 +2,12 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const NotFoundError = require('../errors/NotFoundError');
+const IncorrectDataError = require('../errors/IncorrectDataError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
+const ConflictError = require('../errors/ConflictError');
 
 const SUCCESS = 200;
-const ERROR_INCORRECT_DATE = 400;
-const ERROR_UNAUTHORIZED = 401;
-const ERROR_NOT_FOUND = 404;
-const CONFLICT = 409;
-const ERROR_INTERNAL_SERVER = 500;
 
 const getUsers = async (req, res, next) => {
   try {
@@ -27,39 +26,38 @@ const getUser = async (req, res, next) => {
   } catch (err) {
     console.error(err);
     if (err.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+      return next(new NotFoundError('Ошибка 404. Пользователь не найден'));
     }
     if (err.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Некорректно передан _id пользователя' });
+      return next(new IncorrectDataError('Ошибка 400. Некорректно передан _id пользователя'));
     }
     return next(err);
   }
 };
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   try {
     const {
       name, about, avatar, email, password,
     } = req.body;
     const hash = await bcrypt.hash(password, 10);
-    const checkEmailDuplication = await User.findOne({ email });
-    if (checkEmailDuplication) {
-      return res.status(CONFLICT).send({ message: 'Пользователь c такой почтой уже существует ' });
-    }
     const user = await User.create({
       name, about, avatar, email, password: hash,
     });
     return res.status(SUCCESS).json({
       _id: user._id, email: user.email, name: user.name, about: user.about, avatar: user.avatar,
     });
-  } catch (e) {
-    console.error(e);
-    if (e.name === 'ValidationError' || e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при создании пользователя' });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 11000) {
+      return next(new ConflictError('Ошибка 409. Пользователь c такой почтой уже существует'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при создании пользователя'));
+    }
+    return next(err);
   }
 };
-const updateUserProfile = async (req, res) => {
+const updateUserProfile = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const { name, about } = req.body;
@@ -68,18 +66,18 @@ const updateUserProfile = async (req, res) => {
       runValidators: true,
     }).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(updateUser);
-  } catch (e) {
-    console.error(e);
-    if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'NotValidId') {
+      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
     }
-    if (e.name === 'ValidationError' || e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при изменении данных' });
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при изменении данных'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
-const updateAvatarUser = async (req, res) => {
+const updateAvatarUser = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const { avatar } = req.body;
@@ -88,46 +86,46 @@ const updateAvatarUser = async (req, res) => {
       runValidators: true,
     }).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).json(updateUser);
-  } catch (e) {
-    console.error(e);
-    if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'NotValidId') {
+      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
     }
-    if (e.name === 'ValidationError' || e.name === 'CastError') {
-      return res.status(ERROR_INCORRECT_DATE).json({ message: 'Переданы некорректные данные при изменении аватара' });
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      return next(new IncorrectDataError('Ошибка 400. Переданы некорректные данные при изменении аватара'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).select('+password');
     if (user === null) {
-      return res.status(ERROR_UNAUTHORIZED).json({ message: 'Переданы некорректные данные email или пароля' });
+      return next(new UnauthorizedError('Ошибка 401. Переданы некорректные данные email или пароля'));
     }
     const matched = await bcrypt.compare(password, user.password);
     if (!matched) {
-      return res.status(ERROR_UNAUTHORIZED).json({ message: 'Переданы некорректные данные email или пароля' });
+      return next(new UnauthorizedError('Ошибка 401. Переданы некорректные данные email или пароля'));
     }
     const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
     return res.status(SUCCESS).json({ token });
-  } catch (e) {
-    console.error(e);
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+  } catch (err) {
+    console.error(err);
+    return next(err);
   }
 };
-const getUserInfo = async (req, res) => {
+const getUserInfo = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId).orFail(new Error('NotValidId'));
     return res.status(SUCCESS).send(user);
-  } catch (e) {
-    console.error(e);
-    if (e.message === 'NotValidId') {
-      return res.status(ERROR_NOT_FOUND).json({ message: 'Пользователь не найден' });
+  } catch (err) {
+    console.error(err);
+    if (err.message === 'NotValidId') {
+      return next(new NotFoundError('Ошибка 404.Пользователь не найден'));
     }
-    return res.status(ERROR_INTERNAL_SERVER).json({ message: 'На сервере произошла ошибка' });
+    return next(err);
   }
 };
 module.exports = {
